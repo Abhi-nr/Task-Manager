@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px 0 0 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            background-color: #660000;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .subtask {
+            display: flex;
+            align-items: center;
+        }
+
+        .subtask-name {
+            flex: 1;
+        }
+
+        .subtask-button,
+        .important-button,
+        .complete-button {
+            background-color: transparent;
+            border: none;
+            color: #660000;
+            cursor: pointer;
+            transition: color .3s;
+        }
+
+        .subtask-button:hover,
+        .important-button:hover,
+        .complete-button:hover {
+            color: #660000;
+        }
+
+        .delete-button,
+        .edit-button {
+            background-color: transparent;
+            border: none;
+            color: #710a0a;
+            cursor: pointer;
+            transition: color .3s;
+        }
+
+        .delete-button:hover,
+        .edit-button:hover {
+            color: #660000;
+        }
+
+        .edit-input {
+            flex: 1;
+            padding: 5px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px 0 0 5px;
+        }
+
+        .edit-button-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .important-task {
+            background-color: darkgray !important;
+        }
+
+        .completed-subtask {
+            background-color: #f46b86;
+        }
+
+        .progress-bar-container {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+            position: relative;
+        }
+
+        .progress {
+            height: 100%;
+            border-radius: 5px;
+            background-color: #67d037;
+        }
+
+        .progress-text {
+            font-size: 14px;
+        }
+
+        .alarm-container {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .alarm-icon {
+            color: #660000;
+            margin-right: 5px;
+        }
+
+        .alarm-input {
+            margin-right: 10px;
+        }
+
+        .reminder-bar {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .reminder-text {
+            font-size: 14px;
+        }
+
+        .dark-mode body {
+            background-color: #333;
+            color: #fff;
+        }
+
+        .dark-mode .container {
+            background-color: #222;
+        }
+
+        .dark-mode h1 {
+            color: #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Task Manager</h1>
+        <form id="taskForm">
+            <input type="text" id="taskInput" placeholder="Add a new task..." required>
+            <button type="submit">Add Task</button>
+            <button id="voiceRecognitionButton">Start Voice Recognition</button>
+        </form>
+
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        const taskForm = document.getElementById('taskForm');
+        const taskInput = document.getElementById('taskInput');
+        const taskList = document.getElementById('taskList');
+        const voiceRecognitionButton = document.getElementById('voiceRecognitionButton');
+
+        taskForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const taskName = taskInput.value.trim();
+            if (taskName !== '') {
+                addTask(taskName);
+                taskInput.value = '';
+            }
+        });
+
+        function startAlarm() {
+            const audio = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+            audio.play();
+        }
+
+        function addTask(taskName) {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span class="task-name">${taskName}</span>
+                <button class="add-subtask-button">Add Subtask</button>
+                <ul class="subtask-list"></ul>
+                <div class="edit-button-container">
+                    <input type="text" class="edit-input" value="${taskName}" style="display: none;">
+                    <button class="edit-button"><i class="fas fa-edit"></i></button>
+                    <button class="delete-button"><i class="fas fa-trash-alt"></i></button>
+                    <button class="important-button">Mark as Important</button>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 0;"></div>
+                    </div>
+                    <span class="progress-text">0%</span>
+                </div>
+                <div class="alarm-container">
+                    <i class="fas fa-bell alarm-icon"></i>
+                    <input type="datetime-local" class="alarm-input">
+                    <input type="text" class="reminder-textbox" placeholder="Enter reminder text">
+                </div>
+                <div class="reminder-bar">
+                    <span class="reminder-text"></span>
+                    <button class="alarm-stop-button">OK</button>
+                </div>
+            `;
+
+            taskList.appendChild(li);
+
+            const addSubtaskButton = li.querySelector('.add-subtask-button');
+            const subtaskList = li.querySelector('.subtask-list');
+
+            addSubtaskButton.addEventListener('click', function () {
+                const subtaskName = prompt('Enter the subtask:');
+                if (subtaskName !== null && subtaskName.trim() !== '') {
+                    addSubtask(subtaskName, subtaskList, li);
+                }
+            });
+
+            const deleteButton = li.querySelector('.delete-button');
+            deleteButton.addEventListener('click', function () {
+                li.remove();
+            });
+
+            const editButton = li.querySelector('.edit-button');
+            const editInput = li.querySelector('.edit-input');
+            editButton.addEventListener('click', function () {
+                if (editInput.style.display === 'none') {
+                    editInput.style.display = 'block';
+                    editInput.focus();
+                    editButton.innerHTML = '<i class="fas fa-save"></i>';
+                } else {
+                    const newTaskName = editInput.value.trim();
+                    if (newTaskName !== '') {
+                        li.querySelector('.task-name').textContent = newTaskName;
+                        editInput.style.display = 'none';
+                        editButton.innerHTML = '<i class="fas fa-edit"></i>';
+                    }
+                }
+            });
+
+            const importantButton = li.querySelector('.important-button');
+            importantButton.addEventListener('click', function () {
+                li.classList.toggle('important-task');
+            });
+
+            const startSubtaskVoiceRecognitionButton = document.createElement('button');
+            startSubtaskVoiceRecognitionButton.textContent = 'Start Subtask Voice Recognition';
+            startSubtaskVoiceRecognitionButton.addEventListener('click', function () {
+                startSubtaskVoiceRecognition(subtaskList, li);
+            });
+            li.appendChild(startSubtaskVoiceRecognitionButton);
+
+            let totalSubtasks = 0;
+            let completedSubtasks = 0;
+
+            function updateProgress() {
+                const progress = (completedSubtasks / totalSubtasks) * 100;
+                const progressBar = li.querySelector('.progress');
+                const progressText = li.querySelector('.progress-text');
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${progress.toFixed(0)}%`;
+            }
+
+            function addSubtask(subtaskName, subtaskList, parentTask) {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="subtask">
+                        <span class="subtask-name">${subtaskName}</span>
+                        <button class="delete-subtask-button"><i class="fas fa-trash-alt"></i></button>
+                        <button class="edit-subtask-button"><i class="fas fa-edit"></i></button>
+                        <button class="complete-button">Mark as Completed</button>
+                    </div>
+                    <input type="text" class="edit-subtask-input" value="${subtaskName}" style="display: none;">
+                `;
+
+                subtaskList.appendChild(li);
+
+                const deleteSubtaskButton = li.querySelector('.delete-subtask-button');
+                deleteSubtaskButton.addEventListener('click', function () {
+                    li.remove();
+                    updateProgress();
+                });
+
+                const editSubtaskButton = li.querySelector('.edit-subtask-button');
+                const editSubtaskInput = li.querySelector('.edit-subtask-input');
+                const completeButton = li.querySelector('.complete-button');
+
+                completeButton.addEventListener('click', function () {
+                    li.classList.toggle('completed-subtask');
+
+                    if (li.classList.contains('completed-subtask')) {
+                        completedSubtasks++;
+                    } else {
+                        completedSubtasks--;
+                    }
+
+                    updateProgress();
+                });
+
+                editSubtaskButton.addEventListener('click', function () {
+                    if (editSubtaskInput.style.display === 'none') {
+                        editSubtaskInput.style.display = 'block';
+                        editSubtaskInput.focus();
+                        editSubtaskButton.innerHTML = '<i class="fas fa-save"></i>';
+                    } else {
+                        const newSubtaskName = editSubtaskInput.value.trim();
+                        if (newSubtaskName !== '') {
+                            li.querySelector('.subtask-name').textContent = newSubtaskName;
+                            editSubtaskInput.style.display = 'none';
+                            editSubtaskButton.innerHTML = '<i class="fas fa-edit"></i>';
+                        }
+                    }
+                });
+
+                totalSubtasks++;
+                updateProgress();
+            }
+
+            function startSubtaskVoiceRecognition(subtaskList, parentTask) {
+                const subtaskRecognition = new webkitSpeechRecognition();
+                subtaskRecognition.lang = 'en-US';
+                subtaskRecognition.continuous = false;
+                subtaskRecognition.interimResults = false;
+
+                subtaskRecognition.start();
+
+                subtaskRecognition.onresult = function (event) {
+                    const result = event.results[0][0].transcript;
+                    addSubtask(result, subtaskList, parentTask);
+                };
+            }
+
+            const alarmInput = li.querySelector('.alarm-input');
+            const reminderTextbox = li.querySelector('.reminder-textbox');
+            const reminderBar = li.querySelector('.reminder-bar');
+            alarmInput.addEventListener('change', function () {
+                const alarmTime = new Date(alarmInput.value);
+                const reminderText = reminderTextbox.value;
+
+                if (alarmTime.toString() !== 'Invalid Date') {
+                    const now = new Date();
+                    const timeDifference = alarmTime - now;
+
+                    if (timeDifference > 0) {
+                        setTimeout(() => {
+                            reminderBar.style.display = 'flex';
+                            reminderBar.innerHTML = `<span class="reminder-text">Reminder: ${reminderText}</span>
+                                <button class="alarm-stop-button">OK</button>`;
+                            setTimeout(() => {
+                                reminderBar.style.display = 'none';
+                            }, 5000);
+
+                            const alarmStopButton = li.querySelector('.alarm-stop-button');
+                            alarmStopButton.addEventListener('click', function () {
+                                reminderBar.style.display = 'none';
+                                startAlarm(); // Start the alarm sound
+                            });
+                        }, timeDifference);
+                    }
+                }
+            });
+        }
+
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        function startVoiceRecognition() {
+            recognition.start();
+        }
+
+        recognition.onresult = function (event) {
+            const result = event.results[0][0].transcript;
+            addTaskOrSubtask(result);
+        };
+
+        function addTaskOrSubtask(text) {
+            const currentTask = document.querySelector('.task-name input');
+            if (currentTask) {
+                addSubtask(text, currentTask.parentNode.querySelector('.subtask-list'));
+            } else {
+                addTask(text);
+            }
+        }
+
+        voiceRecognitionButton.addEventListener('click', startVoiceRecognition);
+    </script>
+</body>
+
+</html>

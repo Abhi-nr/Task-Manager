@@ -1,0 +1,130 @@
+<html>
+    <head>
+        <title>LoginForm</title>
+        <link rel ="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class ="box">
+            <div class ="form">
+                <form>
+                    <div class="inputbox">
+                        <input type ="text" value=""id="username"required>
+                        <span>username</span>
+                    </div>
+                    <div class="inputbox">
+                        <input type ="email" value=""id="email"required>
+                        <span>E-mail</span>
+                    </div>
+                    <div class="inputbox">
+                        <input type ="text" value=""id="phone"required>
+                        <span>Phone Number</span>
+                    </div>
+                    <input type="submit" value="submit" class = "sub">
+                </form>
+            </div>
+        </div>
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+            import { getDatabase, ref, set,push,onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        
+            const firebaseConfig = {
+  apiKey: "AIzaSyAJic51JwvKvJYq5MsG0j9_qcMQiwslmlk",
+  authDomain: "taskproject-d9b6c.firebaseapp.com",
+  databaseURL: "https://taskproject-d9b6c-default-rtdb.firebaseio.com",
+  projectId: "taskproject-d9b6c",
+  storageBucket: "taskproject-d9b6c.appspot.com",
+  messagingSenderId: "715160974688",
+  appId: "1:715160974688:web:10c70de26cd0b7b1ef5a05",
+  measurementId: "G-CDGWS9TQD0"
+};
+const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Function to add tasks for a specific user
+    function addTaskForUser(username, taskName) {
+        const userTasksRef = ref(db, 'user/' + username + '/tasks');
+        const newTaskRef = push(userTasksRef);
+
+        set(newTaskRef, {
+            taskName: taskName,
+            completed: false
+        }).then(() => {
+            // Task added successfully
+            console.log("Task added successfully");
+        }).catch((error) => {
+            console.error("ERROR SAVING TASK DATA:", error);
+        });
+    }
+
+    // Function to display user credentials and tasks
+    function displayUserData(username) {
+        const userRef = ref(db, 'user/' + username);
+
+        onValue(userRef, (snapshot) => {
+            const user = snapshot.val();
+            if (user) {
+                console.log("User Credentials:", user);
+
+                // Display user credentials in your HTML elements
+                // For example, update the content of div elements with id 'usernameDisplay', 'emailDisplay', 'phoneDisplay'
+                document.getElementById('usernameDisplay').textContent = user.username;
+                document.getElementById('emailDisplay').textContent = user.email;
+                document.getElementById('phoneDisplay').textContent = user.PhoneNumber;
+            }
+        });
+
+        const userTasksRef = ref(db, 'user/' + username + '/tasks');
+
+        onValue(userTasksRef, (snapshot) => {
+            const tasks = snapshot.val();
+            if (tasks) {
+                console.log("User Tasks:", tasks);
+
+                // Display tasks in your HTML elements
+                // For example, update the content of a ul element with id 'taskList'
+                const taskList = document.getElementById('taskList');
+                taskList.innerHTML = ''; // Clear existing tasks
+
+                for (const taskKey in tasks) {
+                    const task = tasks[taskKey];
+                    const li = document.createElement('li');
+                    li.textContent = task.taskName;
+                    taskList.appendChild(li);
+                }
+            }
+        });
+    }
+
+    document.querySelector(".sub").addEventListener('click', function (e) {
+        e.preventDefault();
+        const username = document.getElementById("username").value;
+        const email = document.getElementById("email").value;
+        const phoneNumber = document.getElementById("phone").value;
+
+        // Save user details
+        set(ref(db, 'user/' + username), {
+            username: username,
+            email: email,
+            PhoneNumber: phoneNumber
+        }).then(() => {
+            alert("Login Successful");
+            window.location.href = "index.html";
+            // Call the function to display user credentials and tasks after successful login
+            displayUserData(username);
+        }).catch((error) => {
+            console.error("ERROR SAVING USER DATA:", error);
+        });
+
+        // Example: Add a task for the user
+        
+        // const taskName = "Example Task";
+        const taskName = document.getElementById("taskImp")
+        addTaskForUser(username, taskName);
+    });
+    
+    
+        </script>
+        
+        <script src="script.js"></script>
+    </body>
+</html>
