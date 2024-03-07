@@ -1,14 +1,4 @@
-# Task-Manager
-## Overview
-The Task Manager Web App is a simple task management application built using HTML, CSS,JavaScript and firebase. It allows users to create tasks, add subtasks, mark tasks as important, set alarms, and more.
-
-## Features
-- Add tasks with subtasks
-- Edit and delete tasks and subtasks
-- Mark tasks as important
-- Track task progress with a progress bar
-- Set alarms for tasks with a reminder feature
-- Dark mode for improved visibility
+Our task manager web tool is a comprehensive solution for organizing tasks and subtasks efficiently. Users can easily add, delete, and update tasks and subtasks, either manually or through voice inputs, making task management more accessible and intuitive. The tool includes a "Mark as Complete" feature for subtasks, allowing users to track their progress visually with a dynamic progress bar that updates in real-time. Users can also mark tasks as important, prioritizing them within the list for better organization. One of the standout features is the reminder functionality, which sets alarms for tasks, ensuring important deadlines are never missed. The tool utilizes Firebase for data storage, providing a secure and reliable backend for storing task information. Overall, our task manager web tool offers a user-friendly interface with powerful features that cater to various task management needs, enhancing productivity and organization for individuals and teams alike.
 
 ## Getting Started
 1. Clone the repository to your local machine.
